@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 我想举报某个用户/团体/群组
+    url: https://github.com/anthropics/fic-guard/blob/main/docs/incident-response.md
+    about: 这个仓库不是举报平台。请按 incident-response.md 走平台投诉 / 法律渠道。
