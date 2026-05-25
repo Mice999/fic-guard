@@ -20,7 +20,25 @@
 
 为什么这样设计：见 [`docs/why-not-a-callout-site.md`](docs/why-not-a-callout-site.md)。
 
-## 安装
+## 下载预编译版（推荐给不想装 Python 的用户）
+
+前往本仓库的 **[Releases 页面](https://github.com/Mice999/fic-guard/releases)**，下载对应你系统的文件，双击即可使用，无需安装 Python：
+
+| 系统 | 文件名 |
+|------|--------|
+| Windows 64位 | `fic-guard-windows-x64.exe` |
+| macOS Apple Silicon | `fic-guard-macos-arm64` |
+| macOS Intel | `fic-guard-macos-x86_64` |
+| Linux 64位 | `fic-guard-linux-x64` |
+
+**注意事项**：
+- 预编译版不附带 `examples/sample.txt`，直接用你自己的 `.txt` 文件即可，例如：`fic-guard fingerprint make 我的小说.txt --work-id ch1`
+- **macOS**：下载后先在终端执行 `chmod +x fic-guard-macos-*`。第一次打开可能被 Gatekeeper 拦截，有两种方式放行：① 在"系统设置 → 隐私与安全性"里点"仍要打开"；② 或者右键点击文件 → 选择"打开" → 在弹窗里点"打开"（macOS 15+ 推荐用这种方式）。
+- **Windows**：可能出现 SmartScreen 提示，点"更多信息 → 仍要运行"即可。
+
+---
+
+## 从源码安装
 
 需要 Python 3.9+。
 

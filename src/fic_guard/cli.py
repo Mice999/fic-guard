@@ -24,6 +24,12 @@ from .monitor import run_monitor, save_report
 from .safe_publish import QUESTIONS, run_interactive, score_answers
 from .timestamp import make_proof, ots_hint, save_proof, verify_proof
 
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except AttributeError:
+    pass
+
 console = Console()
 
 
