@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}fic-guard — 发布自检{% endblock %}
+{% block content %}
+<h1>发布前自检清单</h1>
+<p>回答以下问题，评估发布后的暴露风险。答案仅在本地处理，不保存、不上传。</p>
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+{% if not result %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% for q in questions %}
+  <fieldset>
+    <legend>{{ q.prompt }}</legend>
+    {% for key, label, _ in q.options %}
+    <div class="radio-opt">
+      <input type="radio" name="{{ q.key }}" id="{{ q.key }}_{{ key }}" value="{{ key }}"
+        {% if answers.get(q.key) == key or (not answers.get(q.key) and loop.first) %}checked{% endif %}>
+      <label for="{{ q.key }}_{{ key }}">{{ label }}</label>
+    </div>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+  <button type="submit">提交评估</button>
+</form>
+{% else %}
+<div class="result-box">
+  <h2>评估结果</h2>
+  <p>暴露风险：
+    <span class="band-{{ result.band }}">{% if result.band == 'low' %}低{% elif result.band == 'moderate' %}中{% else %}高{% endif %}</span>
+    &nbsp;（{{ result.score }} / {{ result.max_score }} 分）
+  </p>
+  <p><strong>建议：</strong></p>
+  <ul>
+    {% for s in result.suggestions %}<li>{{ s }}</li>{% endfor %}
+  </ul>
+</div>
+<p style="margin-top:1rem"><a href="/safe-publish">重新评估</a></p>
+{% endif %}
+{% endblock %}

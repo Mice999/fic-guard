@@ -23,6 +23,9 @@ dependencies = [
     "click>=8.1",
     "requests>=2.31",
     "rich>=13.0",
+    "flask>=3.0",
+    "waitress>=3.0",
+    "flask-wtf>=1.2",
 ]
 
 [project.optional-dependencies]

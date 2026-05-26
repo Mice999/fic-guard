@@ -253,5 +253,37 @@ def guide() -> None:
     ))
 
 
+# ---------- web ----------
+
+@main.command()
+@click.option("--port", type=int, default=None, help="Port to listen on (default: auto-assigned).")
+@click.option("--no-browser", is_flag=True, help="Do not open browser automatically.")
+def web(port: int | None, no_browser: bool) -> None:
+    """Launch a local web UI at http://127.0.0.1:<port>."""
+    import socket
+    import webbrowser
+
+    from waitress import serve
+
+    from .web import create_app
+
+    if port is None:
+        with socket.socket() as _s:
+            _s.bind(("127.0.0.1", 0))
+            port = _s.getsockname()[1]
+
+    app = create_app(port)
+    url = f"http://127.0.0.1:{port}"
+    console.print(Panel.fit(
+        f"[green]fic-guard web[/] 运行中\n"
+        f"地址：[bold]{url}[/]\n"
+        f"按 [bold]Ctrl+C[/] 退出",
+        title="web",
+    ))
+    if not no_browser:
+        webbrowser.open(url)
+    serve(app, host="127.0.0.1", port=port, threads=4)
+
+
 if __name__ == "__main__":  # pragma: no cover
     main()

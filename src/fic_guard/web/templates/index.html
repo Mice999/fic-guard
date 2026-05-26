@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}fic-guard{% endblock %}
+{% block content %}
+<h1>fic-guard — 创作者自保工具箱</h1>
+<p>所有操作完全在本地进行，不上传任何数据，不替你联系任何平台。</p>
+<table>
+  <tr><th>功能</th><th>用途</th></tr>
+  <tr>
+    <td><a href="/fingerprint">指纹</a></td>
+    <td>从作品中提取签名句，生成可用于搜索的指纹文件</td>
+  </tr>
+  <tr>
+    <td><a href="/timestamp">时间戳存证</a></td>
+    <td>生成 SHA-256 存证，证明你在某时刻持有这份内容</td>
+  </tr>
+  <tr>
+    <td><a href="/watermark">零宽水印</a></td>
+    <td>在文本中嵌入不可见标签，追溯泄露来源</td>
+  </tr>
+  <tr>
+    <td><a href="/safe-publish">发布自检</a></td>
+    <td>发布前的风险评估清单（离线，答案不保存）</td>
+  </tr>
+  <tr>
+    <td><a href="/monitor">监控</a></td>
+    <td>根据指纹生成搜索链接，手动核查作品是否被搬运</td>
+  </tr>
+</table>
+{% endblock %}

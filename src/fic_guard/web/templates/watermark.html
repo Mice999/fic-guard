@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}fic-guard — 嵌入水印{% endblock %}
+{% block content %}
+<h1>嵌入零宽水印</h1>
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>上传文本文件（.txt / .md）</label>
+  <input type="file" name="text_file" accept=".txt,.md,.text">
+  <p class="sep">— 或 —</p>
+  <label>粘贴文本</label>
+  <textarea name="text_paste" rows="8" placeholder="把作品内容粘贴到这里…"></textarea>
+  <label>水印 payload（如平台标签 site-A，不超过 50 字符）</label>
+  <input type="text" name="payload" placeholder="site-A" maxlength="50" required>
+  <label>每隔多少字符嵌入一次（默认 200，最小 50）</label>
+  <input type="number" name="every" value="200" min="50" max="2000">
+  <button type="submit">嵌入水印并下载</button>
+</form>
+<p class="hint">水印使用不可见的零宽字符，肉眼无法察觉，复制粘贴后仍然保留。懒爬虫直接复制时会带走水印；有备而来的攻击者可以移除。把它当作低成本的第一道筛子，配合指纹和时间戳一起用。</p>
+{% endblock %}
