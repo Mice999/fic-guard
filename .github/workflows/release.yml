@@ -64,3 +64,4 @@ jobs:
           files: dist/fic-guard-*
           fail_on_unmatched_files: true
           draft: true
+ 
