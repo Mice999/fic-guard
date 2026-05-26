@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name for the release (e.g. v0.2.0-alpha.4)"
+        required: true
 
 permissions:
   contents: write
@@ -55,6 +60,7 @@ jobs:
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           files: dist/fic-guard-*
           fail_on_unmatched_files: true
           draft: true
