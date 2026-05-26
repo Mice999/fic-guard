@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}fic-guard — 监控{% endblock %}
+{% block content %}
+<h1>生成监控搜索链接</h1>
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+{% if not report %}
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>上传指纹文件（.fingerprint.json）</label>
+  <input type="file" name="fingerprint_file" accept=".json" required>
+  <button type="submit">生成搜索链接</button>
+</form>
+<p class="hint">上传由"指纹"功能生成的 .fingerprint.json 文件，将为每条签名句生成 DuckDuckGo 和 Bing 的搜索链接。仅生成链接，不联网查询。</p>
+{% else %}
+<p>作品：<strong>{{ report.work_id }}</strong> &nbsp;·&nbsp; 生成时间：{{ report.generated_at }}</p>
+{% if report.notes %}
+<div class="alert alert-error">{{ report.notes | join(' ') }}</div>
+{% endif %}
+{% if urls %}
+<p>共 <strong>{{ urls | length }}</strong> 条搜索链接，建议逐一打开手动核查：</p>
+<ul class="url-list">
+  {% for u in urls %}
+  <li>
+    <div class="url-sent">「{{ u.sentence[:50] }}{% if u.sentence | length > 50 %}…{% endif %}」</div>
+    <a href="{{ u.query_url }}" target="_blank" rel="noopener noreferrer">{{ u.query_url }}</a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>指纹中没有签名句，请重新生成指纹。</p>
+{% endif %}
+<p style="margin-top:1.2rem"><a href="/monitor">重新上传</a></p>
+{% endif %}
+{% endblock %}

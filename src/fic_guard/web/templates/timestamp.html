@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}fic-guard — 时间戳存证{% endblock %}
+{% block content %}
+<h1>生成时间戳存证</h1>
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>上传文本文件（.txt / .md）</label>
+  <input type="file" name="text_file" accept=".txt,.md,.text">
+  <p class="sep">— 或 —</p>
+  <label>粘贴文本</label>
+  <textarea name="text_paste" rows="8" placeholder="把作品内容粘贴到这里…"></textarea>
+  <label>作品 ID</label>
+  <input type="text" name="work_id" placeholder="my-fic-ch1" required>
+  <button type="submit">生成并下载存证 JSON</button>
+</form>
+<p class="hint">存证文件包含 SHA-256 和生成时间。配合 OpenTimestamps 可将哈希锚定到比特币区块链，免费、无需账号。</p>
+{% endblock %}

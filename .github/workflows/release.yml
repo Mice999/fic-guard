@@ -37,12 +37,7 @@ jobs:
           pip install . pyinstaller
 
       - name: Build executable
-        run: >
-          pyinstaller
-          --onefile
-          --name fic-guard
-          --collect-all rich
-          fic_guard_entry.py
+        run: python build.py
 
       - name: Rename artifact (Linux)
         if: runner.os == 'Linux'

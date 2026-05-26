@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}fic-guard{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f8f8f8; color: #111; }
+    nav { display: flex; align-items: center; gap: .25rem 1.25rem; flex-wrap: wrap;
+          padding: .7rem 1.5rem; background: #fff; border-bottom: 1px solid #e0e0e0; }
+    nav strong { margin-right: .25rem; font-size: 1rem; }
+    nav a { color: #555; text-decoration: none; font-size: .92rem; }
+    nav a:hover { color: #000; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+    h1 { font-size: 1.2rem; margin: 0 0 1.1rem; }
+    label { display: block; margin: .85rem 0 .3rem; font-weight: 600; font-size: .93rem; }
+    input[type=text], input[type=number], textarea {
+      display: block; width: 100%; padding: .42rem .6rem;
+      border: 1px solid #ccc; border-radius: 4px; font-size: .97rem; background: #fff;
+    }
+    textarea { resize: vertical; }
+    input[type=file] { font-size: .92rem; }
+    .sep { text-align: center; color: #aaa; margin: .5rem 0; font-size: .88rem; }
+    button[type=submit] {
+      display: inline-block; margin-top: 1rem; padding: .5rem 1.3rem;
+      background: #222; color: #fff; border: none; border-radius: 4px;
+      font-size: .97rem; cursor: pointer;
+    }
+    button[type=submit]:hover { background: #000; }
+    .alert { padding: .65rem .9rem; border-radius: 4px; margin: .85rem 0; font-size: .93rem; }
+    .alert-error   { background: #fff0f0; border: 1px solid #f5b8b8; color: #900; }
+    .alert-success { background: #f0fff4; border: 1px solid #9dd5b0; color: #1a6e35; }
+    .result-box { background: #fff; border: 1px solid #ddd; border-radius: 5px;
+                  padding: 1rem 1.2rem; margin-top: 1.1rem; }
+    .result-box h2 { font-size: 1rem; margin: 0 0 .7rem; }
+    .band-low      { color: #1a8c45; font-weight: 700; }
+    .band-moderate { color: #a06000; font-weight: 700; }
+    .band-high     { color: #c0192a; font-weight: 700; }
+    fieldset { border: 1px solid #ddd; border-radius: 4px; padding: .7rem 1rem; margin: .8rem 0; }
+    legend { font-weight: 600; font-size: .93rem; padding: 0 .25rem; }
+    .radio-opt { display: flex; align-items: flex-start; gap: .4rem; margin: .3rem 0; }
+    .radio-opt input { margin-top: .22rem; flex-shrink: 0; }
+    .radio-opt label { font-weight: normal; margin: 0; font-size: .93rem; }
+    .hint { font-size: .84rem; color: #666; margin-top: .5rem; line-height: 1.5; }
+    ul.url-list { list-style: none; padding: 0; margin: .5rem 0; }
+    ul.url-list li { margin: .55rem 0; }
+    .url-sent { font-size: .82rem; color: #666; margin-bottom: .1rem; }
+    ul.url-list a { color: #1a55aa; word-break: break-all; font-size: .88rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: .6rem; }
+    th, td { text-align: left; padding: .4rem .65rem; border: 1px solid #ddd; font-size: .92rem; }
+    th { background: #f3f3f3; }
+  </style>
+</head>
+<body>
+<nav>
+  <strong>fic-guard</strong>
+  <a href="/">首页</a>
+  <a href="/fingerprint">指纹</a>
+  <a href="/timestamp">时间戳</a>
+  <a href="/watermark">水印</a>
+  <a href="/safe-publish">发布自检</a>
+  <a href="/monitor">监控</a>
+</nav>
+<div class="wrap">
+  {% block content %}{% endblock %}
+</div>
+</body>
+</html>
