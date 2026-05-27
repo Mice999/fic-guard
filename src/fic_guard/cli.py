@@ -1,6 +1,7 @@
 """fic-guard command-line interface."""
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -256,21 +257,16 @@ def guide() -> None:
 # ---------- web ----------
 
 @main.command()
-@click.option("--port", type=int, default=None, help="Port to listen on (default: auto-assigned).")
+@click.option("--port", type=int, default=8765, show_default=True, help="Port to listen on.")
 @click.option("--no-browser", is_flag=True, help="Do not open browser automatically.")
-def web(port: int | None, no_browser: bool) -> None:
+def web(port: int, no_browser: bool) -> None:
     """Launch a local web UI at http://127.0.0.1:<port>."""
-    import socket
+    import threading
     import webbrowser
 
     from waitress import serve
 
     from .web import create_app
-
-    if port is None:
-        with socket.socket() as _s:
-            _s.bind(("127.0.0.1", 0))
-            port = _s.getsockname()[1]
 
     app = create_app(port)
     url = f"http://127.0.0.1:{port}"
@@ -281,7 +277,18 @@ def web(port: int | None, no_browser: bool) -> None:
         title="web",
     ))
     if not no_browser:
-        webbrowser.open(url)
+        def _open():
+            import time, sys
+            time.sleep(1.5)
+            try:
+                if sys.platform == "win32":
+                    os.startfile(url)
+                else:
+                    import webbrowser
+                    webbrowser.open(url)
+            except Exception:
+                pass
+        threading.Thread(target=_open, daemon=True).start()
     serve(app, host="127.0.0.1", port=port, threads=4)
 
 
