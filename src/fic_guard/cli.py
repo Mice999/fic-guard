@@ -262,7 +262,6 @@ def guide() -> None:
 def web(port: int, no_browser: bool) -> None:
     """Launch a local web UI at http://127.0.0.1:<port>."""
     import threading
-    import webbrowser
 
     from waitress import serve
 
