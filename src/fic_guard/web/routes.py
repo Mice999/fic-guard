@@ -121,6 +121,22 @@ def safe_publish():
     return render_template("safe_publish.html", questions=QUESTIONS, result=result, answers=answers)
 
 
+@bp.route("/watermark/extract", methods=["GET", "POST"])
+def watermark_extract():
+    if request.method == "POST":
+        text = _read_text()
+        if not text:
+            return render_template("watermark_extract.html", error="请上传文件或粘贴文本内容。")
+        from ..fingerprint import extract_watermark
+        payloads = extract_watermark(text)
+        seen = []
+        for p in payloads:
+            if p not in seen:
+                seen.append(p)
+        return render_template("watermark_extract.html", payloads=seen)
+    return render_template("watermark_extract.html")
+
+
 @bp.route("/monitor", methods=["GET", "POST"])
 def monitor():
     if request.method == "POST":

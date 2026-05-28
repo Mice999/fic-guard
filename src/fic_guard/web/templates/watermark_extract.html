@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}fic-guard — 提取水印{% endblock %}
+{% block content %}
+<h1>提取零宽水印</h1>
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>上传文本文件（.txt / .md）</label>
+  <input type="file" name="text_file" accept=".txt,.md,.text">
+  <p class="sep">— 或 —</p>
+  <label>粘贴文本</label>
+  <textarea name="text_paste" rows="8" placeholder="把需要检测的文本粘贴到这里…"></textarea>
+  <button type="submit">提取水印</button>
+</form>
+{% if payloads is defined %}
+  <div class="result-box">
+    <h2>提取结果</h2>
+    {% if payloads %}
+      <p>发现 {{ payloads|length }} 个水印 payload：</p>
+      <ul>
+        {% for p in payloads %}
+          <li><code>{{ p }}</code></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="hint">未发现水印。</p>
+    {% endif %}
+  </div>
+{% endif %}
+<p class="hint">提取使用的是零宽字符解码，只能识别由 fic-guard 嵌入的水印格式。</p>
+{% endblock %}
