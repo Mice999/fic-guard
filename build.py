@@ -19,6 +19,7 @@ args = [
     "--collect-all", "wtforms",
     "--collect-all", "waitress",
     f"--add-data=src/fic_guard/web/templates{SEP}fic_guard/web/templates",
+    f"--add-data=src/fic_guard/data{SEP}fic_guard/data",
     "fic_guard_entry.py",
 ]
 

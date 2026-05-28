@@ -56,18 +56,26 @@ class MonitorReport:
         )
 
 
-def build_search_queries(fp: Fingerprint) -> list[tuple[str, str]]:
-    """Return (sentence, search_url) tuples the user can open manually.
+def _load_search_engines() -> list[dict]:
+    import sys
+    if getattr(sys, "frozen", False):
+        # PyInstaller bundle: --add-data lands data at MEIPASS/fic_guard/data
+        base = Path(sys._MEIPASS) / "fic_guard" / "data"  # type: ignore[attr-defined]
+    else:
+        base = Path(__file__).parent.parent / "data"
+    with open(base / "search_engines.json", encoding="utf-8") as f:
+        return json.load(f)
 
-    We default to DuckDuckGo HTML (no JS, no tracking) and Bing.
-    """
+
+def build_search_queries(fp: Fingerprint) -> list[tuple[str, str]]:
+    """Return (sentence, search_url) tuples the user can open manually."""
+    engines = _load_search_engines()
     queries: list[tuple[str, str]] = []
     for sent in fp.signature_sentences:
-        q = f'"{sent}"'
-        ddg = "https://duckduckgo.com/?q=" + urllib.parse.quote(q)
-        queries.append((sent, ddg))
-        bing = "https://www.bing.com/search?q=" + urllib.parse.quote(q)
-        queries.append((sent, bing))
+        q = urllib.parse.quote(f'"{sent}"')
+        for engine in engines:
+            url = engine["url_template"].format(query=q)
+            queries.append((sent, url))
     return queries
 
 
