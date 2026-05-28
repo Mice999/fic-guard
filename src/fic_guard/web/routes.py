@@ -45,6 +45,11 @@ def fingerprint():
                 error="作品 ID 只能包含字母、数字、连字符、下划线或点，且不能为空。",
             )
         fp = generate_fingerprint(text, work_id=work_id)
+        if not fp.signature_sentences:
+            return render_template(
+                "fingerprint.html",
+                error="文本内容太短，无法提取签名句。请粘贴 200 字以上的内容（建议粘贴完整章节）。",
+            )
         return send_file(
             io.BytesIO(fp.to_json().encode("utf-8")),
             mimetype="application/json",
@@ -130,6 +135,11 @@ def monitor():
                 error="无法解析指纹文件，请确认是 fic-guard 生成的 .fingerprint.json 文件。",
             )
         report = run_monitor(fp, use_network=False)
+        report.notes = [
+            "指纹中没有签名句，请重新生成指纹时粘贴更多内容（建议完整章节，200 字以上）。"
+            if "No signature sentences" in n else n
+            for n in report.notes
+        ]
         urls = [
             fi for fi in report.findings
             if fi.provider == "manual-open"
