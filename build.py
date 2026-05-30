@@ -23,7 +23,7 @@ args = [
     "fic_guard_entry.py",
 ]
 
-if sys.platform == "win32":
+if sys.platform in ("win32", "darwin"):
     args.append("--windowed")
 
 PyInstaller.__main__.run(args)
