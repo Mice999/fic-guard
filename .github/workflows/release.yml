@@ -26,10 +26,6 @@ jobs:
             platform: windows
           - os: macos-latest
             platform: macos
-            arch: arm64
-          - os: macos-13
-            platform: macos
-            arch: x86_64
 
     runs-on: ${{ matrix.os }}
 
@@ -52,11 +48,24 @@ jobs:
         if: runner.os == 'Linux'
         run: mv dist/fic-guard dist/fic-guard-linux-x64
 
-      - name: Package artifact (macOS)
+      - name: Build Universal Binary and package (macOS)
         if: runner.os == 'macOS'
         run: |
+          pip install pyinstaller
+          # build arm64
+          python build.py --arch arm64
+          mv dist/fic-guard dist/fic-guard-arm64
+          rm -rf build dist/fic-guard.app __pycache__ *.spec
+          # build x86_64
+          python build.py --arch x86_64
+          mv dist/fic-guard dist/fic-guard-x86_64
+          rm -rf build dist/fic-guard.app __pycache__ *.spec
+          # merge universal
+          lipo -create -output dist/fic-guard dist/fic-guard-arm64 dist/fic-guard-x86_64
+          # package as .app
+          python build.py --universal
           cd dist
-          zip -r "fic-guard-macos-${{ matrix.arch }}.zip" fic-guard.app
+          zip -r fic-guard-macos-universal.zip fic-guard.app
 
       - name: Rename artifact (Windows)
         if: runner.os == 'Windows'
