@@ -26,6 +26,10 @@ jobs:
             platform: windows
           - os: macos-latest
             platform: macos
+            arch: arm64
+          - os: macos-13
+            platform: macos
+            arch: x86_64
 
     runs-on: ${{ matrix.os }}
 
@@ -52,7 +56,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           cd dist
-          zip -r "fic-guard-macos-$(uname -m).zip" fic-guard.app
+          zip -r "fic-guard-macos-${{ matrix.arch }}.zip" fic-guard.app
 
       - name: Rename artifact (Windows)
         if: runner.os == 'Windows'
