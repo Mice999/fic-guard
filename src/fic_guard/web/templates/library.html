@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}fic-guard — 书库{% endblock %}
+{% block content %}
+<h1>书库</h1>
+<div style="display:flex; gap:1rem; margin-bottom:1.2rem; flex-wrap:wrap;">
+  <div class="result-box" style="flex:1; min-width:120px;">
+    <div style="font-size:.82rem; color:#666; margin-bottom:.2rem;">追踪作品</div>
+    <div style="font-size:1.6rem; font-weight:700;">{{ stats.works }}</div>
+  </div>
+  <div class="result-box" style="flex:1; min-width:120px;">
+    <div style="font-size:.82rem; color:#666; margin-bottom:.2rem;">待核查链接</div>
+    <div style="font-size:1.6rem; font-weight:700; color:#a06000;">{{ stats.pending }}</div>
+  </div>
+  <div class="result-box" style="flex:1; min-width:120px;">
+    <div style="font-size:.82rem; color:#666; margin-bottom:.2rem;">已确认侵权</div>
+    <div style="font-size:1.6rem; font-weight:700; color:#c0192a;">{{ stats.confirmed }}</div>
+  </div>
+</div>
+
+<div style="margin-bottom:1rem;">
+  <a href="/library/add" style="display:inline-block; padding:.45rem 1.1rem; background:#222; color:#fff; text-decoration:none; border-radius:4px; font-size:.93rem;">+ 添加作品</a>
+</div>
+
+{% if works %}
+<table>
+  <tr>
+    <th>标题</th>
+    <th>作品 ID</th>
+    <th>待核查</th>
+    <th>上次检查</th>
+    <th>操作</th>
+  </tr>
+  {% for w in works %}
+  <tr>
+    <td><a href="/library/{{ w.id }}">{{ w.title }}</a></td>
+    <td style="font-size:.85rem; color:#666;">{{ w.work_id }}</td>
+    <td>
+      {% if w.finding_count > 0 %}
+        <span style="color:#a06000; font-weight:600;">{{ w.finding_count }}</span>
+      {% else %}
+        <span style="color:#aaa;">—</span>
+      {% endif %}
+    </td>
+    <td style="font-size:.85rem; color:#666;">{{ w.last_checked or "从未" }}</td>
+    <td><a href="/library/{{ w.id }}">详情</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="hint">还没有追踪的作品。<a href="/library/add">添加第一部作品</a>。</p>
+{% endif %}
+{% endblock %}

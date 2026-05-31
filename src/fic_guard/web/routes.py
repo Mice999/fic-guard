@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import re
 
-from flask import Blueprint, render_template, request, send_file
+from flask import Blueprint, abort, redirect, render_template, request, send_file, url_for
 
 from ..fingerprint import Fingerprint, embed_watermark, generate_fingerprint
 from ..monitor import run_monitor
@@ -163,3 +163,89 @@ def monitor():
         ]
         return render_template("monitor.html", report=report, urls=urls)
     return render_template("monitor.html")
+
+
+# ── Library ──────────────────────────────────────────────────────────────────
+
+from ..library import (  # noqa: E402
+    add_finding as _lib_add_finding,
+    add_work,
+    dashboard_stats,
+    get_work,
+    list_findings,
+    list_works,
+    update_finding_status,
+    update_last_checked,
+)
+
+
+@bp.route("/library")
+def library():
+    stats = dashboard_stats()
+    works = list_works()
+    return render_template("library.html", stats=stats, works=works)
+
+
+@bp.route("/library/add", methods=["GET", "POST"])
+def library_add():
+    if request.method == "POST":
+        title = (request.form.get("title") or "").strip()
+        notes = (request.form.get("notes") or "").strip()
+        f = request.files.get("fingerprint_file")
+        if not title:
+            return render_template("library_add.html", error="请填写作品标题。")
+        if not f or not f.filename:
+            return render_template("library_add.html", error="请上传指纹文件。")
+        try:
+            fp_json = f.read().decode("utf-8")
+            fp = Fingerprint.from_json(fp_json)
+        except Exception:
+            return render_template(
+                "library_add.html",
+                error="无法解析指纹文件，请确认是 fic-guard 生成的 .fingerprint.json 文件。",
+            )
+        add_work(title=title, work_id=fp.work_id, fingerprint_json=fp_json, notes=notes)
+        return redirect(url_for("main.library"))
+    return render_template("library_add.html")
+
+
+@bp.route("/library/<int:work_id>")
+def library_detail(work_id: int):
+    work = get_work(work_id)
+    if work is None:
+        abort(404)
+    findings = list_findings(work_id)
+    return render_template("library_detail.html", work=work, findings=findings)
+
+
+@bp.route("/library/<int:work_id>/check", methods=["POST"])
+def library_check(work_id: int):
+    work = get_work(work_id)
+    if work is None:
+        abort(404)
+    try:
+        fp = Fingerprint.from_json(work.fingerprint_json)
+    except Exception:
+        abort(400)
+    report = run_monitor(fp, use_network=False)
+    for fi in report.findings:
+        _lib_add_finding(
+            work_id=work_id,
+            sentence=fi.sentence,
+            provider=fi.provider,
+            query_url=fi.query_url,
+            snippet=fi.snippet,
+            result_url=fi.result_url,
+        )
+    update_last_checked(work_id)
+    return redirect(url_for("main.library_detail", work_id=work_id))
+
+
+@bp.route("/library/findings/<int:finding_id>/status", methods=["POST"])
+def library_finding_status(finding_id: int):
+    status = (request.form.get("status") or "").strip()
+    try:
+        update_finding_status(finding_id, status)
+    except ValueError:
+        abort(400)
+    return redirect(request.referrer or url_for("main.library"))

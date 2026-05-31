@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}fic-guard — 添加作品{% endblock %}
+{% block content %}
+<h1>添加作品到书库</h1>
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>作品标题（显示用，可自由填写）</label>
+  <input type="text" name="title" placeholder="例：异闻录 第一章" required>
+  <label>上传指纹文件（.fingerprint.json）</label>
+  <input type="file" name="fingerprint_file" accept=".json" required>
+  <label>备注（可选）</label>
+  <textarea name="notes" rows="3" placeholder="发布平台、章节范围等备注信息…"></textarea>
+  <button type="submit">添加到书库</button>
+</form>
+<p class="hint">指纹文件由"<a href="/fingerprint">指纹</a>"功能生成。添加后可在书库中一键生成监控搜索链接。</p>
+<p style="margin-top:1rem;"><a href="/library">← 返回书库</a></p>
+{% endblock %}
