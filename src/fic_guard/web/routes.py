@@ -174,6 +174,8 @@ from ..library import (  # noqa: E402
     get_work,
     list_findings,
     list_works,
+    load_config,
+    save_config,
     update_finding_status,
     update_last_checked,
 )
@@ -227,7 +229,9 @@ def library_check(work_id: int):
         fp = Fingerprint.from_json(work.fingerprint_json)
     except Exception:
         abort(400)
-    report = run_monitor(fp, use_network=False)
+    cfg = load_config()
+    serper_key = cfg.get("serper_api_key") or request.environ.get("SERPER_API_KEY") or None
+    report = run_monitor(fp, use_network=True, serper_api_key=serper_key)
     for fi in report.findings:
         _lib_add_finding(
             work_id=work_id,
@@ -249,3 +253,16 @@ def library_finding_status(finding_id: int):
     except ValueError:
         abort(400)
     return redirect(request.referrer or url_for("main.library"))
+
+
+# ── Settings ──────────────────────────────────────────────────────────────────
+
+@bp.route("/settings", methods=["GET", "POST"])
+def settings():
+    cfg = load_config()
+    saved = False
+    if request.method == "POST":
+        cfg["serper_api_key"] = (request.form.get("serper_api_key") or "").strip()
+        save_config(cfg)
+        saved = True
+    return render_template("settings.html", cfg=cfg, saved=saved)

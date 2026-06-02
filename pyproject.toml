@@ -26,6 +26,7 @@ dependencies = [
     "flask>=3.0",
     "waitress>=3.0",
     "flask-wtf>=1.2",
+    "beautifulsoup4>=4.12",
 ]
 
 [project.optional-dependencies]

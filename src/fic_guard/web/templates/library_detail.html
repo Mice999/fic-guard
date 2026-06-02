@@ -15,21 +15,50 @@
 
 <form method="post" action="/library/{{ work.id }}/check" style="margin-bottom:1.4rem;">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <button type="submit">生成 / 刷新搜索链接</button>
+  <button type="submit">触发检查（联网搜索）</button>
 </form>
 
 {% if findings %}
-{% set pending   = findings | selectattr("status", "eq", "pending")   | list %}
-{% set confirmed = findings | selectattr("status", "eq", "confirmed") | list %}
-{% set dismissed = findings | selectattr("status", "eq", "dismissed") | list %}
 
-{% if pending %}
-<h2 style="font-size:1rem; margin:1.2rem 0 .5rem;">待核查（{{ pending | length }}）</h2>
+{# 分三类：真实结果（有 result_url）、手动链接（manual-open）、其余 #}
+{% set real     = findings | selectattr("result_url") | list %}
+{% set manual   = findings | selectattr("provider", "eq", "manual-open") | list %}
+
+{# 再按状态细分真实结果 #}
+{% set real_pending   = real | selectattr("status", "eq", "pending")   | list %}
+{% set real_confirmed = real | selectattr("status", "eq", "confirmed") | list %}
+{% set real_dismissed = real | selectattr("status", "eq", "dismissed") | list %}
+
+{% if real %}
+
+{% if real_confirmed %}
+<h2 style="font-size:1rem; margin:1.2rem 0 .5rem; color:#c0192a;">已确认侵权（{{ real_confirmed | length }}）</h2>
 <ul class="url-list">
-  {% for f in pending %}
+  {% for f in real_confirmed %}
+  <li style="border:1px solid #f5b8b8; border-radius:4px; padding:.6rem .8rem; margin:.5rem 0; background:#fff8f8;">
+    <div class="url-sent">签名句：「{{ f.sentence[:60] }}{% if f.sentence | length > 60 %}…{% endif %}」</div>
+    {% if f.snippet %}<div style="font-size:.85rem; color:#555; margin:.2rem 0;">{{ f.snippet }}</div>{% endif %}
+    <a href="{{ f.result_url }}" target="_blank" rel="noopener noreferrer">{{ f.result_url }}</a>
+    <div style="margin-top:.5rem;">
+      <form method="post" action="/library/findings/{{ f.id }}/status" style="display:inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="status" value="dismissed">
+        <button type="submit" style="padding:.25rem .7rem; font-size:.82rem; background:#888; color:#fff; border:none; border-radius:3px; cursor:pointer;">撤销 / 忽略</button>
+      </form>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if real_pending %}
+<h2 style="font-size:1rem; margin:1.2rem 0 .5rem;">待核实结果（{{ real_pending | length }}）</h2>
+<ul class="url-list">
+  {% for f in real_pending %}
   <li style="border:1px solid #e8e8e8; border-radius:4px; padding:.6rem .8rem; margin:.5rem 0;">
-    <div class="url-sent">「{{ f.sentence[:60] }}{% if f.sentence | length > 60 %}…{% endif %}」</div>
-    <a href="{{ f.query_url }}" target="_blank" rel="noopener noreferrer">{{ f.query_url }}</a>
+    <div class="url-sent">签名句：「{{ f.sentence[:60] }}{% if f.sentence | length > 60 %}…{% endif %}」&nbsp;·&nbsp;<span style="color:#777;">{{ f.provider }}</span></div>
+    {% if f.snippet %}<div style="font-size:.85rem; color:#555; margin:.2rem 0;">{{ f.snippet }}</div>{% endif %}
+    <a href="{{ f.result_url }}" target="_blank" rel="noopener noreferrer">{{ f.result_url }}</a>
     <div style="margin-top:.5rem; display:flex; gap:.5rem; flex-wrap:wrap;">
       <form method="post" action="/library/findings/{{ f.id }}/status" style="display:inline;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -47,38 +76,20 @@
 </ul>
 {% endif %}
 
-{% if confirmed %}
-<h2 style="font-size:1rem; margin:1.2rem 0 .5rem; color:#c0192a;">已确认侵权（{{ confirmed | length }}）</h2>
-<ul class="url-list">
-  {% for f in confirmed %}
-  <li style="border:1px solid #f5b8b8; border-radius:4px; padding:.6rem .8rem; margin:.5rem 0; background:#fff8f8;">
-    <div class="url-sent">「{{ f.sentence[:60] }}{% if f.sentence | length > 60 %}…{% endif %}」</div>
-    <a href="{{ f.query_url }}" target="_blank" rel="noopener noreferrer">{{ f.query_url }}</a>
-    <div style="margin-top:.5rem;">
-      <form method="post" action="/library/findings/{{ f.id }}/status" style="display:inline;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="status" value="dismissed">
-        <button type="submit" style="padding:.25rem .7rem; font-size:.82rem; background:#888; color:#fff; border:none; border-radius:3px; cursor:pointer;">撤销 / 忽略</button>
-      </form>
-    </div>
-  </li>
-  {% endfor %}
-</ul>
-{% endif %}
-
-{% if dismissed %}
+{% if real_dismissed %}
 <details style="margin-top:1rem;">
-  <summary style="cursor:pointer; font-size:.88rem; color:#888;">已忽略（{{ dismissed | length }}）</summary>
+  <summary style="cursor:pointer; font-size:.88rem; color:#888;">已忽略的真实结果（{{ real_dismissed | length }}）</summary>
   <ul class="url-list" style="margin-top:.5rem;">
-    {% for f in dismissed %}
+    {% for f in real_dismissed %}
     <li style="border:1px solid #e8e8e8; border-radius:4px; padding:.5rem .8rem; margin:.4rem 0; opacity:.6;">
       <div class="url-sent">「{{ f.sentence[:60] }}{% if f.sentence | length > 60 %}…{% endif %}」</div>
-      <a href="{{ f.query_url }}" target="_blank" rel="noopener noreferrer">{{ f.query_url }}</a>
+      {% if f.snippet %}<div style="font-size:.85rem; color:#555; margin:.2rem 0;">{{ f.snippet }}</div>{% endif %}
+      <a href="{{ f.result_url }}" target="_blank" rel="noopener noreferrer">{{ f.result_url }}</a>
       <div style="margin-top:.4rem;">
         <form method="post" action="/library/findings/{{ f.id }}/status" style="display:inline;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="status" value="pending">
-          <button type="submit" style="padding:.2rem .6rem; font-size:.8rem; background:#555; color:#fff; border:none; border-radius:3px; cursor:pointer;">恢复待核查</button>
+          <button type="submit" style="padding:.2rem .6rem; font-size:.8rem; background:#555; color:#fff; border:none; border-radius:3px; cursor:pointer;">恢复</button>
         </form>
       </div>
     </li>
@@ -88,7 +99,26 @@
 {% endif %}
 
 {% else %}
-<p class="hint">还没有搜索链接。点击上方"生成 / 刷新搜索链接"按钮生成。</p>
+<p class="hint">本次检查未搜索到真实结果（搜索引擎可能限流或无匹配）。</p>
+{% endif %}
+
+{% if manual %}
+<details style="margin-top:1.2rem;">
+  <summary style="cursor:pointer; font-size:.88rem; color:#888;">手动搜索链接（{{ manual | length }}）</summary>
+  <p style="font-size:.84rem; color:#666; margin:.4rem 0 .6rem;">搜索引擎未自动返回结果时，可点击以下链接手动核查：</p>
+  <ul class="url-list">
+    {% for f in manual %}
+    <li>
+      <div class="url-sent">「{{ f.sentence[:60] }}{% if f.sentence | length > 60 %}…{% endif %}」</div>
+      <a href="{{ f.query_url }}" target="_blank" rel="noopener noreferrer">{{ f.query_url }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
+
+{% else %}
+<p class="hint">还没有检查记录。点击上方"触发检查"按钮开始联网搜索。</p>
 {% endif %}
 
 <p style="margin-top:1.5rem;"><a href="/library">← 返回书库</a></p>

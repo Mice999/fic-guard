@@ -1,6 +1,7 @@
 """Local work library — persistent SQLite registry of tracked works and monitoring findings."""
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -9,6 +10,21 @@ from typing import Optional
 
 
 _DB_FILE = Path.home() / ".fic_guard" / "library.db"
+_CONFIG_FILE = Path.home() / ".fic_guard" / "config.json"
+
+
+def load_config() -> dict:
+    if not _CONFIG_FILE.exists():
+        return {}
+    try:
+        return json.loads(_CONFIG_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def save_config(data: dict) -> None:
+    _CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _CONFIG_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 @dataclass
@@ -67,8 +83,43 @@ def _create_tables(conn: sqlite3.Connection) -> None:
         result_url TEXT DEFAULT '',
         status TEXT NOT NULL DEFAULT 'pending',
         found_at TEXT NOT NULL,
-        UNIQUE(work_id, query_url)
+        UNIQUE(work_id, query_url, result_url)
     );
+    """)
+    conn.commit()
+    _migrate_findings_unique(conn)
+
+
+def _migrate_findings_unique(conn: sqlite3.Connection) -> None:
+    """Migrate UNIQUE(work_id, query_url) → UNIQUE(work_id, query_url, result_url).
+
+    The old constraint dropped every Bing network result because manual-open
+    entries for the same sentence share the same query_url.
+    """
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='findings'"
+    ).fetchone()
+    if not row:
+        return
+    # Already on new schema if result_url appears in the UNIQUE clause
+    if "query_url, result_url" in row[0]:
+        return
+    conn.executescript("""
+        ALTER TABLE findings RENAME TO _findings_old;
+        CREATE TABLE findings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+            sentence TEXT NOT NULL,
+            provider TEXT NOT NULL,
+            query_url TEXT NOT NULL,
+            snippet TEXT DEFAULT '',
+            result_url TEXT DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'pending',
+            found_at TEXT NOT NULL,
+            UNIQUE(work_id, query_url, result_url)
+        );
+        INSERT OR IGNORE INTO findings SELECT * FROM _findings_old;
+        DROP TABLE _findings_old;
     """)
     conn.commit()
 
@@ -145,17 +196,19 @@ def add_finding(
     query_url: str,
     snippet: str = "",
     result_url: str = "",
-) -> None:
+) -> bool:
+    """Insert a finding. Returns True if newly inserted, False if already existed."""
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     conn = _get_conn()
     try:
-        conn.execute(
+        cur = conn.execute(
             """INSERT OR IGNORE INTO findings
                (work_id, sentence, provider, query_url, snippet, result_url, found_at)
                VALUES (?,?,?,?,?,?,?)""",
             (work_id, sentence, provider, query_url, snippet, result_url, now),
         )
         conn.commit()
+        return cur.rowcount == 1
     finally:
         conn.close()
 

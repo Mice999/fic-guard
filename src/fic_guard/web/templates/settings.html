@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}fic-guard — 设置{% endblock %}
+{% block content %}
+<h1>设置</h1>
+
+{% if saved %}
+<div class="alert alert-success">已保存。</div>
+{% endif %}
+
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <fieldset>
+    <legend>搜索 API</legend>
+    <label>Serper API Key
+      <span class="hint" style="font-weight:normal;">（<a href="https://serper.dev" target="_blank" rel="noopener noreferrer">serper.dev</a> 提供 Google 搜索结果，填入后"触发检查"将优先使用 Google 而非 Bing HTML 抓取）</span>
+    </label>
+    <input type="text" name="serper_api_key" value="{{ cfg.get('serper_api_key', '') }}" placeholder="粘贴你的 Serper API Key…" autocomplete="off" spellcheck="false">
+    <p class="hint">Key 保存在本地 <code>~/.fic_guard/config.json</code>，不上传到任何服务器。留空则继续使用 Bing HTML 抓取。</p>
+  </fieldset>
+
+  <button type="submit">保存</button>
+</form>
+{% endblock %}
