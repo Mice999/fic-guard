@@ -50,11 +50,18 @@ def fingerprint():
                 "fingerprint.html",
                 error="文本内容太短，无法提取签名句。请粘贴 200 字以上的内容（建议粘贴完整章节）。",
             )
-        return send_file(
-            io.BytesIO(fp.to_json().encode("utf-8")),
-            mimetype="application/json",
-            as_attachment=True,
+        fp_json = fp.to_json()
+        added_to_library = False
+        try:
+            add_work(title=work_id, work_id=work_id, fingerprint_json=fp_json)
+            added_to_library = True
+        except Exception:
+            pass
+        return render_template(
+            "fingerprint.html",
+            fp_json=fp_json,
             download_name=f"{work_id}.fingerprint.json",
+            added_to_library=added_to_library,
         )
     return render_template("fingerprint.html")
 

@@ -3,6 +3,25 @@
 {% block content %}
 <h1>生成指纹</h1>
 {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+{% if fp_json %}
+<div class="alert alert-success">
+  指纹已生成。{% if added_to_library %} 已自动添加到书库。{% endif %}
+</div>
+<p>
+  <a id="dl-btn" class="button" download="{{ download_name }}" href="#">下载 {{ download_name }}</a>
+</p>
+<p><a href="{{ url_for('main.fingerprint') }}">← 再生成一个</a></p>
+<script>
+(function () {
+  var data = {{ fp_json | tojson }};
+  var blob = new Blob([data], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.getElementById("dl-btn");
+  a.href = url;
+  a.click();
+})();
+</script>
+{% else %}
 <form method="post" enctype="multipart/form-data">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label>上传文本文件（.txt / .md）</label>
@@ -15,4 +34,5 @@
   <button type="submit">生成并下载指纹 JSON</button>
 </form>
 <p class="hint">生成的 .fingerprint.json 文件请妥善保存（私人备份），可用于后续"监控"功能。</p>
+{% endif %}
 {% endblock %}
