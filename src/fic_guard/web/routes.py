@@ -6,7 +6,7 @@ import re
 from flask import Blueprint, abort, redirect, render_template, request, send_file, url_for
 
 from ..fingerprint import Fingerprint, embed_watermark, generate_fingerprint
-from ..monitor import run_monitor
+from ..monitor import match_score, run_monitor
 from ..safe_publish import QUESTIONS, score_answers
 from ..timestamp import make_proof
 
@@ -240,6 +240,10 @@ def library_check(work_id: int):
     serper_key = cfg.get("serper_api_key") or request.environ.get("SERPER_API_KEY") or None
     report = run_monitor(fp, use_network=True, serper_api_key=serper_key)
     for fi in report.findings:
+        if fi.provider == "manual-open":
+            relevance = 0.0
+        else:
+            relevance = match_score(fi.sentence, fi.snippet)
         _lib_add_finding(
             work_id=work_id,
             sentence=fi.sentence,
@@ -247,6 +251,7 @@ def library_check(work_id: int):
             query_url=fi.query_url,
             snippet=fi.snippet,
             result_url=fi.result_url,
+            relevance=relevance,
         )
     update_last_checked(work_id)
     return redirect(url_for("main.library_detail", work_id=work_id))

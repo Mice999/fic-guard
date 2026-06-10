@@ -50,6 +50,7 @@ class LibraryFinding:
     result_url: str
     status: str
     found_at: str
+    relevance: float = 0.0
 
 
 def _get_conn() -> sqlite3.Connection:
@@ -83,11 +84,22 @@ def _create_tables(conn: sqlite3.Connection) -> None:
         result_url TEXT DEFAULT '',
         status TEXT NOT NULL DEFAULT 'pending',
         found_at TEXT NOT NULL,
+        relevance REAL DEFAULT 0,
         UNIQUE(work_id, query_url, result_url)
     );
     """)
     conn.commit()
+    _migrate_findings_relevance(conn)
     _migrate_findings_unique(conn)
+
+
+def _migrate_findings_relevance(conn: sqlite3.Connection) -> None:
+    """Add the relevance column to findings if it's missing (older DBs)."""
+    cols = [row[1] for row in conn.execute("PRAGMA table_info(findings)").fetchall()]
+    if "relevance" in cols:
+        return
+    conn.execute("ALTER TABLE findings ADD COLUMN relevance REAL DEFAULT 0")
+    conn.commit()
 
 
 def _migrate_findings_unique(conn: sqlite3.Connection) -> None:
@@ -116,6 +128,7 @@ def _migrate_findings_unique(conn: sqlite3.Connection) -> None:
             result_url TEXT DEFAULT '',
             status TEXT NOT NULL DEFAULT 'pending',
             found_at TEXT NOT NULL,
+            relevance REAL DEFAULT 0,
             UNIQUE(work_id, query_url, result_url)
         );
         INSERT OR IGNORE INTO findings SELECT * FROM _findings_old;
@@ -196,6 +209,7 @@ def add_finding(
     query_url: str,
     snippet: str = "",
     result_url: str = "",
+    relevance: float = 0.0,
 ) -> bool:
     """Insert a finding. Returns True if newly inserted, False if already existed."""
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -203,9 +217,9 @@ def add_finding(
     try:
         cur = conn.execute(
             """INSERT OR IGNORE INTO findings
-               (work_id, sentence, provider, query_url, snippet, result_url, found_at)
-               VALUES (?,?,?,?,?,?,?)""",
-            (work_id, sentence, provider, query_url, snippet, result_url, now),
+               (work_id, sentence, provider, query_url, snippet, result_url, found_at, relevance)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            (work_id, sentence, provider, query_url, snippet, result_url, now, relevance),
         )
         conn.commit()
         return cur.rowcount == 1

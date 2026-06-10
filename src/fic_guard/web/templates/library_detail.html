@@ -29,6 +29,10 @@
 {% set real_confirmed = real | selectattr("status", "eq", "confirmed") | list %}
 {% set real_dismissed = real | selectattr("status", "eq", "dismissed") | list %}
 
+{# 待处理结果再按相关度分高/低 #}
+{% set pending_high = real_pending | selectattr("relevance", "ge", 0.35) | list %}
+{% set pending_low  = real_pending | selectattr("relevance", "lt", 0.35) | list %}
+
 {% if real %}
 
 {% if real_confirmed %}
@@ -51,12 +55,12 @@
 </ul>
 {% endif %}
 
-{% if real_pending %}
-<h2 style="font-size:1rem; margin:1.2rem 0 .5rem;">待核实结果（{{ real_pending | length }}）</h2>
+{% if pending_high %}
+<h2 style="font-size:1rem; margin:1.2rem 0 .5rem; color:#c0192a;">待核查（{{ pending_high | length }}）</h2>
 <ul class="url-list">
-  {% for f in real_pending %}
-  <li style="border:1px solid #e8e8e8; border-radius:4px; padding:.6rem .8rem; margin:.5rem 0;">
-    <div class="url-sent">签名句：「{{ f.sentence[:60] }}{% if f.sentence | length > 60 %}…{% endif %}」&nbsp;·&nbsp;<span style="color:#777;">{{ f.provider }}</span></div>
+  {% for f in pending_high %}
+  <li style="border:1px solid #f5b8b8; border-radius:4px; padding:.6rem .8rem; margin:.5rem 0; background:#fff8f8;">
+    <div class="url-sent">签名句：「{{ f.sentence[:60] }}{% if f.sentence | length > 60 %}…{% endif %}」&nbsp;·&nbsp;<span style="color:#777;">{{ f.provider }}</span>&nbsp;·&nbsp;<span style="color:#c0192a; font-weight:bold;">相关度 {{ (f.relevance * 100) | round | int }}%</span></div>
     {% if f.snippet %}<div style="font-size:.85rem; color:#555; margin:.2rem 0;">{{ f.snippet }}</div>{% endif %}
     <a href="{{ f.result_url }}" target="_blank" rel="noopener noreferrer">{{ f.result_url }}</a>
     <div style="margin-top:.5rem; display:flex; gap:.5rem; flex-wrap:wrap;">
@@ -74,6 +78,33 @@
   </li>
   {% endfor %}
 </ul>
+{% endif %}
+
+{% if pending_low %}
+<details style="margin-top:1rem;">
+  <summary style="cursor:pointer; font-size:.88rem; color:#888;">低相关结果（{{ pending_low | length }}）</summary>
+  <ul class="url-list" style="margin-top:.5rem;">
+    {% for f in pending_low %}
+    <li style="border:1px solid #e8e8e8; border-radius:4px; padding:.6rem .8rem; margin:.5rem 0;">
+      <div class="url-sent">签名句：「{{ f.sentence[:60] }}{% if f.sentence | length > 60 %}…{% endif %}」&nbsp;·&nbsp;<span style="color:#777;">{{ f.provider }}</span>&nbsp;·&nbsp;<span style="color:#999;">相关度 {{ (f.relevance * 100) | round | int }}%</span></div>
+      {% if f.snippet %}<div style="font-size:.85rem; color:#555; margin:.2rem 0;">{{ f.snippet }}</div>{% endif %}
+      <a href="{{ f.result_url }}" target="_blank" rel="noopener noreferrer">{{ f.result_url }}</a>
+      <div style="margin-top:.5rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+        <form method="post" action="/library/findings/{{ f.id }}/status" style="display:inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="status" value="confirmed">
+          <button type="submit" style="padding:.25rem .7rem; font-size:.82rem; background:#c0192a; color:#fff; border:none; border-radius:3px; cursor:pointer;">确认侵权</button>
+        </form>
+        <form method="post" action="/library/findings/{{ f.id }}/status" style="display:inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="status" value="dismissed">
+          <button type="submit" style="padding:.25rem .7rem; font-size:.82rem; background:#888; color:#fff; border:none; border-radius:3px; cursor:pointer;">忽略</button>
+        </form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
 {% endif %}
 
 {% if real_dismissed %}

@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import re
 import time
+import unicodedata
 import urllib.parse
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -27,7 +28,7 @@ USER_AGENT = "fic-guard/0.1 (+https://github.com/) self-monitoring tool"
 REQUEST_TIMEOUT = 15
 MIN_DELAY_SECONDS = 3.0  # between requests, regardless of provider
 
-_DEFAULT_SERPER_KEY = "1283abcce70a885a0ab75f4f872e24b968851d43"
+_DEFAULT_SERPER_KEY = "6d24289969eef418197ae224e59a19c172de800a"
 
 
 @dataclass
@@ -57,6 +58,49 @@ class MonitorReport:
             ensure_ascii=False,
             indent=2,
         )
+
+
+_NON_WORD_RE = re.compile(r"[^\w]+", re.UNICODE)
+
+
+def _normalize_for_match(s: str) -> str:
+    """Normalize a string for relevance matching.
+
+    Applies NFKC (full-width → half-width), lowercases, and strips all
+    whitespace and punctuation, leaving only letters/digits/CJK characters.
+    """
+    s = unicodedata.normalize("NFKC", s)
+    s = s.lower()
+    return _NON_WORD_RE.sub("", s)
+
+
+def _bigrams(s: str) -> set[str]:
+    return {s[i:i + 2] for i in range(len(s) - 1)}
+
+
+def match_score(sentence: str, snippet: str) -> float:
+    """返回 0~1 的相关度分数。
+
+    规则1：归一化（去空白/标点、全角转半角、转小写）后，若签名句存在
+    长度 >= 15 的连续片段出现在 snippet 中，直接返回 1.0。
+    规则2：否则计算两个归一化字符串的字符 bigram Dice 系数。
+    """
+    s = _normalize_for_match(sentence)
+    t = _normalize_for_match(snippet)
+    if not s or not t:
+        return 0.0
+
+    if len(s) >= 15:
+        for i in range(len(s) - 14):
+            if s[i:i + 15] in t:
+                return 1.0
+
+    bigrams_s = _bigrams(s)
+    bigrams_t = _bigrams(t)
+    if not bigrams_s or not bigrams_t:
+        return 1.0 if s == t else 0.0
+    intersection = len(bigrams_s & bigrams_t)
+    return 2 * intersection / (len(bigrams_s) + len(bigrams_t))
 
 
 def _load_search_engines() -> list[dict]:
